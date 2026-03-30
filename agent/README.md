@@ -325,6 +325,92 @@ When you need to use a tool, respond with ONLY valid JSON in this format:
 If you do not need tools, respond with plain text answering the user's question.
 ```
 
+## PostgreSQL Session Persistence (Bonus ✅)
+
+By default, sessions are stored in an **in-memory Python dict** and are lost when the server restarts.
+
+If you set the `DATABASE_URL` environment variable, all session history is automatically persisted to a **PostgreSQL database**.
+
+### Setup
+
+```bash
+# Start a local Postgres instance (or use any cloud Postgres)
+docker run -d --name pg -e POSTGRES_PASSWORD=pass -e POSTGRES_DB=agentdb -p 5432:5432 postgres:14
+
+# Set the env var before starting the agent server
+export DATABASE_URL="postgresql://postgres:pass@localhost:5432/agentdb"
+python agent/server.py
+```
+
+The `agent_sessions` table is **created automatically** on startup:
+```sql
+CREATE TABLE agent_sessions (
+    id          SERIAL PRIMARY KEY,
+    session_id  TEXT        NOT NULL,
+    role        TEXT        NOT NULL,
+    content     TEXT        NOT NULL,
+    created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+If `DATABASE_URL` is not set or Postgres is unreachable, the agent **gracefully falls back** to the in-memory store — no crash.
+
+The active backend is visible at `GET /agent/health`:
+```json
+{"status": "ok", "session_backend": "postgresql", "llm_backend": "ollama"}
+```
+
+---
+
+## Fine-Tuned TinyLlama Backbone (Bonus ✅)
+
+By default, the agent calls the **Ollama model server** (Mistral 7B) via HTTP for LLM inference.
+
+If you set `USE_FINETUNED_BACKBONE=true`, the agent instead loads the **locally fine-tuned TinyLlama-1.1B + LoRA adapter** directly (from Part 4) and uses it as the LLM backbone.
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Default (USE_FINETUNED_BACKBONE not set)                   │
+│  Agent loop → HTTP POST /chat → Ollama/Mistral-7B           │
+├─────────────────────────────────────────────────────────────┤
+│  With USE_FINETUNED_BACKBONE=true                           │
+│  Agent loop → finetuned_backbone.generate_response()        │
+│              → TinyLlama-1.1B + tinyllama_lora_adapter      │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Setup
+
+```bash
+# Make sure the adapter exists (run Part 4 training first)
+ls finetune/tinyllama_lora_adapter/adapter_model.safetensors
+
+# Activate fine-tuned backbone
+export USE_FINETUNED_BACKBONE=true
+python agent/server.py
+```
+
+### Trade-offs
+
+| | Ollama / Mistral-7B | TinyLlama-1.1B Fine-tuned |
+|---|---|---|
+| Quality | Higher (7B params) | Lower (1.1B params) |
+| Speed | 2–4 tok/s (Ollama) | ~1–2 tok/s (direct CPU) |
+| Tool calling | Reliable JSON | Less consistent |
+| Insurance domain | General | Fine-tuned for insurance QA |
+| Memory | 4.4GB (Ollama) | ~1.5GB (direct load) |
+
+The fine-tuned model falls back to Ollama automatically if the adapter isn't found or an error occurs.
+
+The active backbone is visible at `GET /agent/health`:
+```json
+{"status": "ok", "session_backend": "in-memory", "llm_backend": "finetuned-tinyllama"}
+```
+
+---
+
 ## Dependencies
 
 - `fastapi` - HTTP framework

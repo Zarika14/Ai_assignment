@@ -1,471 +1,382 @@
-# AI Engineer Take-Home Assignment - Parts 1 & 2: Complete RAG System
+# AI Engineer Take-Home Assignment — Complete Implementation
 
-A complete Retrieval-Augmented Generation (RAG) system for insurance policies using open-source models, local LLM serving, and vector search.
+A complete open-source LLM & Agentic Systems implementation for an insurance company internal tool. The system accepts natural language queries from brokers, retrieves relevant policy documents, reasons over them, and responds — **all powered by open-source models only** (no OpenAI API calls anywhere).
 
-**Status**: Parts 1 & 2 ✅ **100% Functional**
+**Status**: Parts 1–5 ✅ **All Complete**
 
-## 🎯 Architecture Overview
+---
+
+## 🏗️ Architecture Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                     USER QUERY                              │
-└────────────────────┬────────────────────────────────────────┘
-                     │
-        ┌────────────┴────────────┐
-        │                         │
-    ┌───▼────────┐          ┌────▼──────────┐
-    │   PART 2   │          │    PART 1     │
-    │ RAG        │          │ Model Server  │
-    │ Pipeline   │          │ (Ollama +     │
-    │            │          │  FastAPI)     │
-    │ • Chunking │          │               │
-    │ • Embedding│◄──────►  │ • /chat       │
-    │ • FAISS    │  HTTP    │ • /stream     │
-    │ • Retrieval│          │ • /health     │
-    └────┬───────┘          └───┬───────────┘
-         │                      │
-         └───────┬──────────────┘
-                 │
-         ┌───────▼──────────┐
-         │  GROUNDED ANSWER │
-         │  WITH SOURCES    │
-         └──────────────────┘
+                        USER QUERY
+                             │
+          ┌──────────────────┼──────────────────┐
+          │                  │                  │
+    ┌─────▼──────┐    ┌──────▼─────┐    ┌──────▼──────┐
+    │  PART 3    │    │   PART 1   │    │   PART 2    │
+    │   Agent    │    │   Model    │    │     RAG     │
+    │  (FastAPI  │───►│   Server   │◄───│  Pipeline   │
+    │  port 8001)│    │(FastAPI    │    │             │
+    │            │    │ port 8000) │    │ • Chunking  │
+    │ Tools:     │    │            │    │ • BGE Embed │
+    │ search_    │    │ • /chat    │    │ • FAISS     │
+    │ policy     │    │ • /stream  │    │ • Re-rank   │
+    │ calc_      │    │ • /health  │    │ • Sources   │
+    │ premium    │    │ • /metrics │    └─────────────┘
+    │ check_     │    └────────────┘
+    │ claim      │
+    └──────┬─────┘
+           │
+    ┌──────▼─────────────┐    ┌────────────────────┐
+    │     PART 4         │    │      PART 5         │
+    │   Fine-Tuning      │    │  Eval & Observ.     │
+    │                    │    │                     │
+    │  TinyLlama-1.1B    │    │  • Retrieval hit    │
+    │  + LoRA (r=8)      │    │    rate             │
+    │  Insurance QA      │    │  • LLM-as-judge     │
+    │  54 examples       │    │  • Struct. logging  │
+    │  Adapter: ~4MB     │    │  • SQLite metrics   │
+    └────────────────────┘    └────────────────────┘
 ```
+
+---
 
 ## 📋 Quick Start
 
 ### Prerequisites
 - Python 3.10+
-- Ollama running locally
-- Docker (optional, for docker-compose)
+- [Ollama](https://ollama.com) running locally with `mistral:latest` pulled
+- ~8GB RAM minimum
 
-### Setup (5 minutes)
-
-**Option 1: Local Setup**
+### Setup
 
 ```bash
-# 1. Start Ollama (in separate terminal)
-ollama serve
-
-# 2. Install dependencies
+# 1. Clone and install dependencies
 pip install -r requirements.txt
-
-# 3. Install RAG dependencies
 pip install -r rag/requirements.txt
-
-# 4. Install model server dependencies  
 pip install -r model_server/requirements.txt
+pip install -r agent/requirements.txt
 
-# 5. Start model server (in separate terminal)
-python model_server/main.py
+# 2. Start Ollama (in a separate terminal)
+ollama serve
+ollama pull mistral:latest
 
-# 6. Index documents
+# 3. Build the RAG index (one-time)
 python rag/index_documents.py
 
-# 7. Run tests
-python rag/test_comprehensive.py
-python rag/test_grounded_answer.py
+# 4. Start the model server (separate terminal)
+python model_server/main.py
+# → http://localhost:8000
+
+# 5. Start the agent server (separate terminal)
+python agent/server.py
+# → http://localhost:8001
+
+# 6. Run evaluations
+python eval/run_evals.py
 ```
 
-**Option 2: Docker Compose (One Command)**
+### Or: One-Command Docker Compose
 
 ```bash
 docker-compose up --build
 ```
 
-Then run tests in another terminal:
-```bash
-python rag/test_comprehensive.py
-```
+---
 
-## 📁 Project Structure
+## 📁 Repository Structure
 
 ```
 .
 ├── model_server/                  # PART 1: Local LLM Serving
-│   ├── main.py                    # FastAPI server
+│   ├── main.py                    # FastAPI server (chat, stream, health, metrics)
 │   ├── test_endpoints.py          # Endpoint tests
+│   ├── metrics.db                 # SQLite request log (auto-created)
 │   ├── requirements.txt
 │   ├── README.md                  # Model choice & config
 │   └── Dockerfile
 │
 ├── rag/                           # PART 2: RAG Pipeline
 │   ├── pipeline.py                # Complete RAG implementation
-│   ├── index_documents.py         # Indexing script
-│   ├── test_interactive.py        # Interactive retrieval
-│   ├── test_grounded_answer.py    # End-to-end demo
+│   ├── index_documents.py         # Indexing script (run once)
 │   ├── test_comprehensive.py      # Full test suite
+│   ├── test_grounded_answer.py    # End-to-end demo
+│   ├── test_interactive.py        # Interactive retrieval
+│   ├── faiss_index.bin            # Built vector index
+│   ├── chunks_metadata.json       # Chunk metadata
 │   ├── requirements.txt
-│   ├── README.md                  # RAG architecture
-│   ├── faiss_index.bin            # Generated index
-│   ├── chunks_metadata.json       # Generated metadata
-│   └── documents/                 # Insurance policies
+│   ├── README.md                  # RAG architecture & chunking rationale
+│   └── documents/
 │       ├── policy_auto_comprehensive.txt
 │       ├── policy_health_bronze.txt
 │       └── policy_home_standard.txt
 │
-├── docker-compose.yml             # One-command orchestration
+├── agent/                         # PART 3: Multi-Turn Agent
+│   ├── agent.py                   # Hand-rolled agent loop + 3 tools
+│   ├── server.py                  # FastAPI agent endpoint
+│   ├── test_agent.py              # Agent test suite
+│   ├── requirements.txt
+│   └── README.md                  # Agent architecture
+│
+├── finetune/                      # PART 4: LoRA Fine-Tuning
+│   ├── generate_dataset.py        # Generate 54 insurance QA examples
+│   ├── train_tiny.py              # LoRA training on TinyLlama-1.1B (CPU)
+│   ├── inference_tiny.py          # Inference with fine-tuned adapter
+│   ├── inference_compare.py       # Base vs fine-tuned comparison (5 examples)
+│   ├── insurance_qa_dataset.json  # 54-sample dataset
+│   ├── inference_results.json     # Comparison results
+│   ├── training_log.txt           # Training loss log
+│   ├── requirements.txt
+│   ├── README.md                  # Fine-tuning documentation
+│   └── tinyllama_lora_adapter/    # Saved LoRA adapter (~4MB delta only)
+│       ├── adapter_config.json
+│       ├── adapter_model.safetensors
+│       └── tokenizer files...
+│
+├── eval/                          # PART 5: Evaluation & Observability
+│   ├── run_evals.py               # 10-query eval: hit rate + LLM-as-judge
+│   └── README.md                  # Eval documentation
+│
+├── eval_results.json              # Latest evaluation results
+├── docker-compose.yml             # One-command orchestration (Bonus)
 ├── requirements.txt               # Root dependencies
-└── README.md                       # This file
+└── README.md                      # This file
 ```
+
+---
 
 ## 🚀 Part 1: Local LLM Setup & Serving
 
-### Model Server Features
+**Model**: Mistral 7B Instruct Q4 via Ollama  
+**Endpoints**:
+- `GET /health` — Health check
+- `POST /chat` — Single-turn non-streaming chat
+- `POST /chat/stream` — Token-by-token Server-Sent Events streaming
+- `GET /metrics/summary` — **(Bonus)** Aggregated metrics from SQLite
 
-- **Endpoints**:
-  - `GET /health` - Health check
-  - `POST /chat` - Single-turn chat
-  - `POST /chat/stream` - Token-streaming with SSE
+**Performance** (measured on i5-9300H, no GPU):
+- Memory: ~4.4GB (Q4 quantization)
+- Speed: 2–4 tokens/sec (CPU)
+- Latency: ~500ms first token
 
-- **Structured JSON Logging** - Every request logged with:
-  - Timestamp (ISO format)
-  - Endpoint
-  - Token estimates
-  - Latency (ms)
-  - Input/output token counts
-  - Error tracking
+**Logging**: Every request logs structured JSON (via `structlog`) with timestamp, session_id, input_tokens, latency_ms, output_tokens, tool_calls_made.
 
-- **Performance**:
-  - **Model**: Mistral 7B Q4 (Ollama)
-  - **Memory**: 4.4GB
-  - **Speed**: 2-4 tokens/sec (CPU)
-  - **Latency**: ~500ms for typical queries
+See [`model_server/README.md`](model_server/README.md) for full documentation.
 
-### Model Server Usage
+> **vLLM Note (Bonus)**: vLLM requires a CUDA GPU and cannot run on this CPU-only machine. Documented with throughput comparison (50–200 tok/s GPU vs 2–4 tok/s CPU) in `model_server/README.md`.
 
-```bash
-# Start Ollama (prerequisite)
-ollama serve
-
-# Start model server
-python model_server/main.py
-
-# Test endpoints
-python model_server/test_endpoints.py
-
-# Example: Non-streaming chat
-curl -X POST http://localhost:8000/chat \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": "What is machine learning?",
-    "system_prompt": "You are a helpful assistant."
-  }'
-
-# Example: Streaming chat
-curl -X POST http://localhost:8000/chat/stream \
-  -H "Content-Type: application/json" \
-  -d '{"message": "Write a haiku"}' \
-  -N
-```
-
-**Model Choice Rationale** (see `model_server/README.md`):
-- **Mistral 7B**: Sweet spot between quality and speed for CPU deployment
-- **Q4 Quantization**: 6-7x size reduction (28GB → 4.4GB)
-- **Ollama**: Simple local serving with pre-built optimizations
+---
 
 ## 🔍 Part 2: RAG Pipeline
 
-### RAG Features
-
-- **Smart Chunking**:
-  - 400-token chunks with 80-token overlap (20%)
-  - Preserves document structure
-  - Metadata tracking (source, position, index)
-
-- **BGE Embeddings**:
-  - `BAAI/bge-small-en-v1.5` (109M params)
-  - Optimized for retrieval tasks
-  - Normalized embeddings for efficient cosine similarity
-
-- **Vector Search**:
-  - FAISS `IndexFlatIP` (inner product)
-  - Fast nearest-neighbor search
-  - Persistent storage (index + metadata)
-
-- **Cross-Encoder Re-ranking** (Bonus):
-  - Two-stage retrieval: dense (fast) → re-rank (accurate)
-  - `ms-marco-MiniLM-L-6-v2`
-  - Significant relevance improvement
-
-- **Source Attribution**:
-  - Every answer traced to specific document/chunk
-  - Scores and confidence included
-  - Grounded in actual policies
-
-### RAG Usage
+**3 policy documents**: auto comprehensive, health bronze, home standard  
+**Embedding model**: `BAAI/bge-small-en-v1.5` (local, no OpenAI)  
+**Vector store**: FAISS `IndexFlatIP`  
+**Chunking**: 400-token chunks, 80-token overlap — justified in `rag/README.md`  
+**Re-ranker (Bonus)**: `cross-encoder/ms-marco-MiniLM-L-6-v2` — two-stage retrieval  
+**Source attribution**: Every answer cites `[filename, chunk N]`
 
 ```python
 from rag.pipeline import RAGPipeline
 
-# Initialize
 pipeline = RAGPipeline(rerank=True)
+pipeline.load_index()  # Load pre-built index
 
-# Build index (one-time)
-pipeline.load_documents()
-pipeline.build_index()
-pipeline.save_index()
-
-# Load index (subsequent runs)
-pipeline.load_index()
-
-# Retrieve chunks
-results = pipeline.retrieve("What is covered?", top_k=3)
-for result in results:
-    print(f"Score: {result['similarity_score']:.3f}")
-    print(f"Source: [{result['source_file']}, chunk {result['chunk_index']}]")
-    print(f"Text: {result['text'][:100]}...")
-
-# Generate grounded answer
-answer = pipeline.answer_with_sources(
-    query="What is the collision deductible?",
-    top_k=3,
-    stream=True  # Token-by-token
-)
-print(answer["answer"])
-print("Sources:", answer["sources"])
+result = pipeline.answer_with_sources("What is the collision deductible?")
+print(result["answer"])   # "The collision deductible is $500 [policy_auto_comprehensive.txt, chunk 3]."
+print(result["sources"])  # [{"source_file": "policy_auto_comprehensive.txt", "chunk_index": 3, ...}]
 ```
+
+See [`rag/README.md`](rag/README.md) for full documentation.
+
+---
+
+## 🤖 Part 3: Multi-Turn Agent with Tool Use
+
+**Hand-rolled** — no LangChain, no frameworks. Implements the full agentic loop from scratch.
+
+**3 tools**:
+| Tool | What It Does |
+|---|---|
+| `search_policy(query)` | Queries RAG pipeline from Part 2 |
+| `calculate_premium(coverage, risk_score)` | Formula: `coverage * 0.02 * risk_score` |
+| `check_claim_status(claim_id)` | Mock claim status from hardcoded dict (CLM-001..CLM-005) |
+
+**Features**:
+- ✅ Stateful per-session message history (in-memory dict)
+- ✅ JSON tool-call parsing with brace counting (`extract_json_tool_call()`)
+- ✅ Graceful handling of malformed JSON (falls back to plain text)
+- ✅ 6-turn cap with graceful message on exceeded limit
+- ✅ `POST /agent/chat` accepting `{session_id, message}`
+
+```bash
+curl -X POST http://localhost:8001/agent/chat \
+  -H "Content-Type: application/json" \
+  -d '{"session_id": "broker-1", "message": "What is the collision deductible?"}'
+```
+
+See [`agent/README.md`](agent/README.md) for full documentation.
+
+---
+
+## 🧠 Part 4: Fine-Tuning TinyLlama-1.1B
+
+**Model**: `TinyLlama/TinyLlama-1.1B-Chat-v1.0` (small model, CPU-trainable)  
+**Method**: LoRA — rank=8, alpha=16, target `q_proj`+`v_proj` — only ~0.1% of params are trained  
+**Dataset**: 54 hand-crafted insurance Q&A examples across 11 categories  
+**Output format**: `{"answer": "...", "confidence": "high|medium|low", "source": "policy|general_knowledge"}`
+
+**Results** (5 comparison examples in `finetune/inference_results.json`):
+- Base model: 0/5 valid structured JSON outputs
+- Fine-tuned: 4/5 valid structured JSON outputs ✅
+
+**Training details**:
+- Loss logged every 5 steps with decreasing trend (see `finetune/training_log.txt`)
+- Adapter saved separately: `tinyllama_lora_adapter/adapter_model.safetensors` (~4.3MB — **base model NOT included**)
+- Total training time: ~60–90 minutes on CPU
+
+```bash
+cd finetune/
+python generate_dataset.py   # Generate 54 examples
+python train_tiny.py          # Fine-tune (60–90 min on CPU)
+python inference_compare.py   # Compare base vs fine-tuned
+```
+
+See [`finetune/README.md`](finetune/README.md) for full documentation.
+
+---
+
+## 📊 Part 5: Evaluation & Observability
+
+### Evaluation Results (`eval_results.json`)
+
+| Metric | Result |
+|---|---|
+| Total queries | 10 |
+| **Retrieval hit rate** | **100% (10/10)** |
+| **Average LLM-as-judge score** | **5.0 / 5.0** |
+
+```bash
+python eval/run_evals.py
+```
+
+### Structured Logging
+
+All FastAPI endpoints use `structlog` with `JSONRenderer` — **no print statements**. Every request logs:
+- `timestamp` (ISO 8601)
+- `session_id`
+- `estimated_input_tokens`
+- `latency_ms`
+- `tool_calls_made`
+
+### Bonus: SQLite Metrics + `/metrics/summary`
+
+Every request is persisted to `model_server/metrics.db`. The endpoint:
+
+```bash
+curl http://localhost:8000/metrics/summary
+```
+
+Returns average latency, total requests, most-used tools, and endpoint breakdown.
+
+See [`eval/README.md`](eval/README.md) for full documentation.
+
+---
+
+## 🏆 Completion Checklist
+
+### Part 1 — Model Server
+- ✅ `model_server/` with README (model choice, quantization, rationale)
+- ✅ `POST /chat` (single turn, non-streaming)
+- ✅ `POST /chat/stream` (SSE, tokens arrive progressively)
+- ✅ Memory footprint documented (4.4GB)
+- ✅ Tokens/sec documented (2–4 tok/s CPU)
+- ⏭️ **Bonus (vLLM)**: Skipped — no GPU available. Documented with honest throughput comparison.
+
+### Part 2 — RAG Pipeline
+- ✅ 3 fake insurance policy documents
+- ✅ Local HF embeddings (`BAAI/bge-small-en-v1.5`, no OpenAI)
+- ✅ Smart chunking with documented rationale (400 tokens, 80 overlap)
+- ✅ FAISS vector store (`IndexFlatIP`)
+- ✅ Retrieval returns top-k with similarity scores
+- ✅ Grounded answers with source attribution `[file, chunk N]`
+- ✅ **Bonus**: Cross-encoder re-ranker (`ms-marco-MiniLM-L-6-v2`)
+
+### Part 3 — Agent
+- ✅ Stateful multi-turn agent — **no LangChain**
+- ✅ `search_policy(query)` tool (calls RAG pipeline)
+- ✅ `calculate_premium(coverage, risk_score)` tool
+- ✅ `check_claim_status(claim_id)` tool
+- ✅ Hand-rolled loop: history, tool detection, execution, injection
+- ✅ Graceful malformed JSON handling
+- ✅ 6-turn cap
+- ✅ `POST /agent/chat` with per-session history
+- ✅ **Bonus (PostgreSQL)**: Optional PostgreSQL persistence via `DATABASE_URL` env var; falls back to in-memory gracefully
+
+### Part 4 — Fine-Tuning
+- ✅ Small model: TinyLlama-1.1B-Chat-v1.0
+- ✅ 54 training examples (>50 required)
+- ✅ Structured JSON output format: `{answer, confidence, source}`
+- ✅ LoRA via HuggingFace PEFT (not full fine-tuning)
+- ✅ Training loss logged and decreasing (see `training_log.txt`)
+- ✅ Adapter weights saved separately (~4.3MB)
+- ✅ 5 inference examples: base vs fine-tuned (see `inference_results.json`)
+- ✅ **Bonus**: Fine-tuned TinyLlama as agent backbone via `USE_FINETUNED_BACKBONE=true` env var (`agent/finetuned_backbone.py`)
+
+### Part 5 — Evaluation & Observability
+- ✅ `eval/run_evals.py` with 10 query-answer pairs
+- ✅ Retrieval hit rate reported (100%)
+- ✅ LLM-as-judge scoring (avg 5.0/5.0)
+- ✅ Structured JSON logging (timestamp, session_id, input_tokens, latency_ms, tool_calls_made)
+- ✅ **Bonus**: SQLite metrics table + `GET /metrics/summary` endpoint
+
+### Repo Extras
+- ✅ `docker-compose.yml` — one-command Ollama + model server
+- ✅ README for all 5 parts
+
+---
 
 ## 🧪 Testing
 
-### Comprehensive Test Suite
-
 ```bash
-# Run all tests (unit + integration)
+# Part 1 — Model server endpoints
+python model_server/test_endpoints.py
+
+# Part 2 — RAG pipeline
 python rag/test_comprehensive.py
-```
-
-**Test Coverage**:
-- ✓ TextChunker: empty text, single sentence, long text
-- ✓ RAGPipeline: initialization, error handling
-- ✓ Input validation: empty queries, invalid top_k
-- ✓ Full pipeline: load → chunk → embed → retrieve
-- ✓ Retrieval quality: relevance scoring
-- ✓ Re-ranking: quality improvement
-- ✓ Model server integration: connectivity, streaming
-
-### Interactive Testing
-
-```bash
-# Interactive retrieval REPL
-python rag/test_interactive.py
-
-# End-to-end grounded answer demo
 python rag/test_grounded_answer.py
 
-# Model server endpoint tests
-python model_server/test_endpoints.py
+# Part 3 — Agent
+python agent/test_agent.py
+
+# Part 5 — Evaluations
+python eval/run_evals.py
 ```
 
-## 📊 Performance Benchmarks
-
-### Indexing
-- **Documents**: 3 policies (~2000 words each)
-- **Chunks**: 24 total
-- **Time**: ~2-5 seconds (CPU, one-time)
-- **Memory**: ~200MB peak
-
-### Retrieval
-- **Query embedding**: ~100ms
-- **FAISS search**: ~50ms (k=3)
-- **Re-ranking**: ~200ms (k*3=9 pairs)
-- **Total**: ~350ms
-
-### Answer Generation
-- **Context building**: ~50ms
-- **Model inference**: ~2-5 seconds (CPU dependent)
-- **Streaming**: Tokens arrive progressively
-- **Total**: ~2-5.5 seconds
-
-### Memory Footprint
-- **FAISS index**: ~25MB (384-dim embeddings, 24 vectors)
-- **Mistral 7B Q4**: 4.4GB
-- **BGE embedding model**: ~400MB
-- **Cross-encoder**: ~200MB
-- **Total**: ~5.2GB
-
-## ⚠️ Error Handling
-
-### Input Validation
-
-All methods validate inputs:
-```python
-# ❌ Empty query
-try:
-    pipeline.retrieve("")
-except ValueError as e:
-    print(f"Query cannot be empty")
-
-# ❌ Invalid top_k
-try:
-    pipeline.retrieve("query", top_k=-1)
-except ValueError as e:
-    print(f"top_k must be positive integer")
-```
-
-### File Validation
-
-Files are checked before operations:
-```python
-# ❌ Documents not found
-try:
-    pipeline.load_documents()
-except FileNotFoundError as e:
-    print(f"Documents directory not found: {e}")
-
-# ❌ Index not found
-try:
-    pipeline.load_index()
-except FileNotFoundError as e:
-    print(f"Run: python index_documents.py")
-```
-
-### Model Server Connectivity
-
-Graceful error handling for server issues:
-```python
-# ✓ Validates server is running
-# ✓ Handles timeouts
-# ✓ Detects connection errors
-
-try:
-    answer = pipeline.answer_with_sources(query)
-except ConnectionError:
-    print("Make sure: ollama serve && python main.py")
-except TimeoutError:
-    print("Model server not responding")
-```
-
-### Streaming Error Recovery
-
-Robust streaming with proper error handling:
-```python
-# ✓ Handles malformed SSE events
-# ✓ Detects connection loss
-# ✓ Validates server responses
-# ✓ Graceful error messages
-```
+---
 
 ## 📚 Architecture Decisions
 
-### Why This Stack?
-
 | Component | Choice | Rationale |
-|-----------|--------|-----------|
-| LLM | Mistral 7B | Balance between quality and CPU efficiency |
-| Quantization | Q4 | 6-7x size reduction, minimal quality loss |
-| Embeddings | BGE (small) | Retrieval-optimized, CPU-friendly |
-| Vector Store | FAISS | Fast retrieval, no external services |
-| Re-ranker | Cross-encoder | Significant accuracy improvement for small cost |
-| Serving | FastAPI | Lightweight, async, structured logging |
+|---|---|---|
+| LLM (serving) | Mistral 7B Q4 via Ollama | Best quality-speed balance on CPU; Q4 cuts size 6–7× with minimal quality loss |
+| Embeddings | BAAI/bge-small-en-v1.5 | Retrieval-optimized, CPU-friendly, no OpenAI dependency |
+| Vector store | FAISS IndexFlatIP | Fast exact search, no external service, persistent |
+| Re-ranker | cross-encoder/ms-marco-MiniLM-L-6-v2 | Significant relevance improvement for small latency cost |
+| Agent framework | Hand-rolled | Demonstrates understanding of the underlying loop, not just API wrappers |
+| Fine-tune model | TinyLlama-1.1B | 7× smaller than Mistral → feasible on CPU; chat variant understands instructions |
+| Fine-tune method | LoRA (r=8) | Trains ~0.1% of params; adapter is 4MB vs GB for full fine-tune |
+| Metrics store | SQLite | Zero-dependency persistent storage for request analytics |
 
-### Design Principles
+---
 
-1. **No External APIs** - Everything runs locally
-2. **CPU Deployable** - Works on laptops without GPU
-3. **Production-Ready** - Error handling, logging, validation
-4. **Observable** - Structured JSON logging for all operations
-5. **Well-Documented** - Rationale for every major decision
+## ⚠️ What Didn't Work / Honest Evaluation
 
-## 🔧 Troubleshooting
+**vLLM swap (Part 1 Bonus)**: vLLM requires CUDA. This machine has an i5-9300H with no GPU. Could not test. Documented throughput difference based on literature (50–200 tok/s GPU vs 2–4 tok/s CPU).
 
-### "Cannot connect to Ollama"
-```bash
-# Start Ollama in background
-ollama serve
-```
+**PostgreSQL session persistence (Part 3 Bonus)**: Implemented with graceful fallback. Set `DATABASE_URL=postgresql://...` to activate. The `agent_sessions` table is created automatically. If Postgres is unavailable, falls back to in-memory dict without crashing.
 
-### "Model server not responding"
-```bash
-# Start model server
-python model_server/main.py
-# Verify: curl http://localhost:8000/health
-```
+**Fine-tuned model as agent backbone (Part 4 Bonus)**: Implemented in `agent/finetuned_backbone.py`. Set `USE_FINETUNED_BACKBONE=true` to swap from Ollama → TinyLlama-1.1B + LoRA adapter. TinyLlama is less reliable at tool-call JSON than Mistral-7B, so Ollama remains the recommended default, but the integration works.
 
-### "Index not found"
-```bash
-# Build index
-python rag/index_documents.py
-```
-
-### "No documents found"
-- Check `rag/documents/` contains `.txt` files
-- Ensure files have policy content, not just headers
-
-### "Retrieval returns no results"
-- Try broader queries
-- Check `rag/test_interactive.py` to debug
-- Rebuild index with `python rag/index_documents.py`
-
-## 📖 Implementation Details
-
-### RAG Pipeline Steps
-
-1. **Load Documents** → Split into 400-token chunks with metadata
-2. **Build Index** → Embed with BGE, store in FAISS
-3. **Retrieve** → Query embedding + vector search
-4. **Re-rank** (optional) → Cross-encoder scoring
-5. **Generate** → Context + LLM call
-6. **Return** → Answer + source attribution
-
-### Streaming Implementation
-
-- Uses Server-Sent Events (SSE)
-- Tokens arrive progressively
-- Proper cleanup and error handling
-- Tested with model server
-
-### Logging
-
-All requests logged with structured format:
-```json
-{
-  "timestamp": "2026-03-28T12:34:56.789Z",
-  "endpoint": "/chat/stream",
-  "status": "success",
-  "latency_ms": 2340.5,
-  "input_tokens": 256,
-  "output_tokens": 128,
-  "model": "mistral:latest"
-}
-```
-
-## 🎓 Learning Outcome
-
-This implementation demonstrates:
-- ✅ Custom vector search (FAISS)
-- ✅ Dense retrieval pipeline (embeddings)
-- ✅ Re-ranking architecture (accuracy)
-- ✅ LLM inference serving (FastAPI)
-- ✅ Streaming with SSE
-- ✅ Error handling and validation
-- ✅ Structured logging
-- ✅ CPU-based deployment
-
-## 📝 Files Reference
-
-See individual README files for detailed documentation:
-- [`model_server/README.md`](model_server/README.md) - Model choice, quantization, endpoints
-- [`rag/README.md`](rag/README.md) - RAG architecture, chunking strategy, error handling
-
-## ✅ Completion Status
-
-- ✅ Part 1: Model Server - 100% Complete
-  - Health endpoint ✓
-  - Chat endpoint ✓
-  - Streaming endpoint ✓
-  - Structured logging ✓
-  - Comprehensive tests ✓
-
-- ✅ Part 2: RAG Pipeline - 100% Complete
-  - Document loading ✓
-  - Smart chunking ✓
-  - BGE embeddings ✓
-  - FAISS indexing ✓
-  - Retrieval with reranking ✓
-  - Grounded answer generation ✓
-  - Error handling and validation ✓
-  - Comprehensive tests ✓
-  - Full documentation ✓
-
-Both phases are fully functional end-to-end with production-ready error handling, validation, and observability.
+**CPU training convergence (Part 4)**: With 3 epochs and 54 examples, the model shows clear improvement (4/5 valid JSON vs 0/5 base) but isn't fully converged. A GPU would allow 10+ epochs and much faster experimentation.

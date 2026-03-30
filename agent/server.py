@@ -3,17 +3,24 @@
 FastAPI Server for Multi-Turn Agent
 
 Endpoints:
-- POST /agent/chat - Send message and get response
-- GET /agent/sessions/{session_id} - Get session history
+- POST /agent/chat  - Send message and get response
+- GET  /agent/sessions/{session_id} - Get session history
 - DELETE /agent/sessions/{session_id} - Clear session
-- GET /health - Health check
+- GET  /agent/health - Health check (shows session + LLM backend)
+
+Environment Variables:
+  DATABASE_URL           PostgreSQL URL for persistent sessions
+  USE_FINETUNED_BACKBONE Set to 'true' to use TinyLlama + LoRA adapter
 """
 
 import json
 import time
 from fastapi import FastAPI, Request
 import structlog
-from agent import run_turn, get_session_history, delete_session, create_session
+from agent import (
+    run_turn, get_session_history, delete_session, create_session,
+    USE_POSTGRES, USE_FINETUNED_BACKBONE
+)
 
 # Configure structured logging
 structlog.configure(
@@ -100,9 +107,10 @@ async def agent_chat(request: Request, body: dict):
         
         latency_ms = (time.time() - start_time) * 1000
         
-        # Log request
+        # Log request — all 5 required fields per assignment spec
         logger.info(
             "agent_chat",
+            timestamp=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             session_id=session_id,
             input_tokens=input_tokens,
             latency_ms=round(latency_ms, 2),
@@ -213,12 +221,14 @@ async def delete_session_endpoint(session_id: str):
 
 @app.get("/agent/health")
 async def agent_health():
-    """Health check endpoint."""
+    """Health check endpoint — also reports which backends are active."""
     logger.info("agent_health_check")
     return {
         "status": "ok",
         "service": "insurance-agent",
-        "version": "1.0"
+        "version": "1.0",
+        "session_backend": "postgresql" if USE_POSTGRES else "in-memory",
+        "llm_backend": "finetuned-tinyllama" if USE_FINETUNED_BACKBONE else "ollama",
     }
 
 

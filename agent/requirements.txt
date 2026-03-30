@@ -6,3 +6,13 @@ python-dotenv==1.0.0
 sentence-transformers==2.2.2
 faiss-cpu==1.7.4
 numpy==1.24.3
+
+# PostgreSQL session persistence (BONUS - optional)
+# Only needed if DATABASE_URL env var is set
+psycopg2-binary>=2.9.0
+
+# Fine-tuned TinyLlama backbone (BONUS - optional)
+# Only needed if USE_FINETUNED_BACKBONE=true env var is set
+torch>=2.0.0
+transformers>=4.40.0
+peft>=0.10.0

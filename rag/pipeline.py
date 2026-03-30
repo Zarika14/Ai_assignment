@@ -141,11 +141,11 @@ class RAGPipeline:
         self.index = None
         
         # Load models
-        print(f"Loading embedding model: {EMBEDDING_MODEL}")
+        logger.info("Loading embedding model: %s", EMBEDDING_MODEL)
         self.embedding_model = SentenceTransformer(EMBEDDING_MODEL)
         
         if self.rerank:
-            print(f"Loading re-ranker model: {RERANKER_MODEL}")
+            logger.info("Loading re-ranker model: %s", RERANKER_MODEL)
             self.reranker = CrossEncoder(RERANKER_MODEL)
         else:
             self.reranker = None
@@ -182,11 +182,11 @@ class RAGPipeline:
         chunker = TextChunker()
         all_chunks = []
         
-        print(f"\nLoading {len(doc_files)} documents...")
+        logger.info("Loading %d documents from %s", len(doc_files), DOCS_DIR)
         
         for doc_file in doc_files:
             try:
-                print(f"  Processing: {doc_file.name}")
+                logger.info("  Processing: %s", doc_file.name)
                 text = doc_file.read_text(encoding='utf-8')
                 
                 if not text.strip():
@@ -195,7 +195,7 @@ class RAGPipeline:
                 
                 chunks = chunker.split(text, doc_file.name)
                 all_chunks.extend(chunks)
-                print(f"    → {len(chunks)} chunks")
+                logger.info("  %s -> %d chunks", doc_file.name, len(chunks))
             except Exception as e:
                 logger.error(f"Error processing {doc_file.name}: {e}")
                 raise
@@ -204,7 +204,7 @@ class RAGPipeline:
             raise ValueError("No chunks created from documents. Check document content.")
         
         self.chunks = all_chunks
-        print(f"\n✓ Total chunks: {len(self.chunks)}")
+        logger.info("Total chunks loaded: %d", len(self.chunks))
         return self.chunks
     
     def build_index(self) -> None:
@@ -219,7 +219,7 @@ class RAGPipeline:
                 "Example: pipeline.load_documents()"
             )
         
-        print(f"\nEmbedding {len(self.chunks)} chunks...")
+        logger.info("Embedding %d chunks...", len(self.chunks))
         texts = [chunk["text"] for chunk in self.chunks]
         
         try:
@@ -233,7 +233,7 @@ class RAGPipeline:
             self.index = faiss.IndexFlatIP(dimension)
             self.index.add(embeddings.astype(np.float32))
             
-            print(f"✓ Index built with {self.index.ntotal} vectors (dimension={dimension})")
+            logger.info("Index built: %d vectors (dim=%d)", self.index.ntotal, dimension)
         except Exception as e:
             logger.error(f"Failed to build index: {e}")
             raise ValueError(f"Index building failed: {e}")
@@ -262,7 +262,7 @@ class RAGPipeline:
             
             # Save FAISS index
             faiss.write_index(self.index, str(index_path))
-            print(f"✓ Index saved to: {index_path}")
+            logger.info("Index saved to: %s", index_path)
             
             # Save metadata
             metadata = [
@@ -277,7 +277,7 @@ class RAGPipeline:
             
             with open(metadata_path, 'w') as f:
                 json.dump(metadata, f, indent=2)
-            print(f"✓ Metadata saved to: {metadata_path}")
+            logger.info("Metadata saved to: %s", metadata_path)
         except Exception as e:
             logger.error(f"Failed to save index: {e}")
             raise IOError(f"Failed to save index: {e}")
@@ -314,7 +314,7 @@ class RAGPipeline:
         try:
             # Load FAISS index
             self.index = faiss.read_index(str(index_path))
-            print(f"✓ Index loaded from: {index_path}")
+            logger.info("Index loaded from: %s", index_path)
             
             # Load metadata
             with open(metadata_path, 'r') as f:
@@ -330,7 +330,7 @@ class RAGPipeline:
                 for chunk in chunks:
                     self.chunks.append(chunk)
             
-            print(f"✓ Metadata loaded: {len(metadata)} chunks")
+            logger.info("Metadata loaded: %d chunks", len(metadata))
             
             if len(self.chunks) != self.index.ntotal:
                 logger.warning(
@@ -406,7 +406,7 @@ class RAGPipeline:
                 if self.reranker is None:
                     raise ValueError("Re-ranker not initialized. Set rerank=True during init.")
                 
-                print(f"  Re-ranking {len(results)} candidates...")
+                logger.debug("Re-ranking %d candidates", len(results))
                 
                 try:
                     # Prepare query-document pairs for cross-encoder
@@ -481,7 +481,7 @@ class RAGPipeline:
             raise ValueError(f"Invalid model_server_url: {model_server_url}")
         
         # Retrieve relevant chunks
-        print(f"\n📚 Retrieving chunks for: {query}")
+        logger.info("Retrieving top-%d chunks for: %s", top_k, query[:60])
         try:
             chunks = self.retrieve(query, top_k=top_k)
         except Exception as e:
@@ -541,7 +541,7 @@ You must include the source attribution in brackets after EACH fact. For example
 Answer (with inline citations for every claim):"""
         
         # Validate model server connectivity
-        print(f"🔗 Connecting to model server: {model_server_url}")
+        logger.info("Connecting to model server: %s", model_server_url)
         try:
             health_response = requests.get(
                 f"{model_server_url}/health",
@@ -551,7 +551,7 @@ Answer (with inline citations for every claim):"""
                 raise ConnectionError(
                     f"Model server returned status {health_response.status_code}"
                 )
-            print(f"✓ Model server is running")
+            logger.info("Model server is running")
         except requests.exceptions.Timeout:
             raise TimeoutError(
                 f"Model server at {model_server_url} is not responding (timeout)"
@@ -567,7 +567,7 @@ Answer (with inline citations for every claim):"""
         
         # Call model server
         endpoint = "chat/stream" if stream else "chat"
-        print(f"📝 Generating answer...")
+        logger.info("Generating grounded answer for: %s", query[:60])
         
         try:
             if stream:
@@ -624,7 +624,7 @@ Answer (with inline citations for every claim):"""
                                 
                                 if token:
                                     answer += token
-                                    print(token, end="", flush=True)
+                                logger.debug("Stream token: %s", token[:20] if token else "[empty]")
                                 
                                 if done:
                                     break
@@ -635,7 +635,7 @@ Answer (with inline citations for every claim):"""
                         if line_count == 0:
                             raise RuntimeError("No data received from streaming endpoint")
                         
-                        print()  # New line after streaming
+                    logger.debug("Stream complete")
                         
                 except requests.exceptions.Timeout:
                     raise TimeoutError("Model server streaming response timed out")
@@ -690,20 +690,14 @@ def print_chunk_stats(chunks: List[Dict]) -> None:
     
     sources = Counter(c["source_file"] for c in chunks)
     sizes = [len(c["text"]) for c in chunks]
-    
-    print(f"\n{'='*60}")
-    print("CHUNK STATISTICS")
-    print(f"{'='*60}")
-    print(f"Total chunks: {len(chunks)}")
-    print(f"\nChunks by source:")
-    for source, count in sorted(sources.items()):
-        print(f"  {source}: {count} chunks")
-    
-    print(f"\nChunk size distribution:")
-    print(f"  Min: {min(sizes)} chars")
-    print(f"  Max: {max(sizes)} chars")
-    print(f"  Avg: {sum(sizes) / len(sizes):.0f} chars")
-    print(f"{'='*60}\n")
+    logger.info(
+        "Chunk statistics: total=%d, min_chars=%d, max_chars=%d, avg_chars=%.0f, by_source=%s",
+        len(chunks),
+        min(sizes) if sizes else 0,
+        max(sizes) if sizes else 0,
+        (sum(sizes) / len(sizes)) if sizes else 0,
+        dict(sorted(sources.items())),
+    )
 
 
 if __name__ == "__main__":

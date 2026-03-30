@@ -48,3 +48,11 @@ model_weights/
 *.ckpt
 .env
 .env.local
+!.env.example
+
+# Generated databases
+model_server/metrics.db
+
+# Generated RAG index files (auto-built by rag/index_documents.py)
+rag/faiss_index.bin
+rag/chunks_metadata.json

@@ -115,16 +115,65 @@ curl http://localhost:8000/health
 
 ## Logging
 
-All endpoints log structured JSON events including:
+All endpoints log structured JSON events (via `structlog`) to stdout including:
 - **timestamp**: ISO 8601 timestamp
 - **endpoint**: Request path (`/chat`, `/chat/stream`, `/health`)
-- **input_token_estimate**: Estimated input tokens (len(message) // 4)
+- **session_id**: Session identifier
+- **estimated_input_tokens**: Estimated input tokens (len(message) // 4)
 - **latency_ms**: Request latency in milliseconds
+- **output_tokens**: Actual output token count (from Ollama eval_count)
+- **tool_calls_made**: List of tools called (passed from agent)
 - **model**: Model name (`mistral:latest`)
 
 Example log output:
 ```json
-{"event": "chat_endpoint", "endpoint": "/chat", "input_token_estimate": 6, "latency_ms": 2543.45, "model": "mistral:latest", "timestamp": "2026-03-28T12:34:56.789Z"}
+{
+  "event": "chat_endpoint",
+  "endpoint": "/chat",
+  "session_id": "user-123",
+  "estimated_input_tokens": 45,
+  "latency_ms": 2543.45,
+  "output_tokens": 128,
+  "tool_calls_made": ["search_policy"],
+  "model": "mistral:latest",
+  "timestamp": "2026-03-28T12:34:56.789Z"
+}
+```
+
+### SQLite Persistence (Bonus)
+
+In addition to stdout logging, every request is persisted to `metrics.db` (SQLite) in the `model_server/` directory. The database stores:
+- All request fields above
+- Tool usage counts per tool name
+- Request status (success/error)
+
+This enables historical analytics without an external database.
+
+## 4. `GET /metrics/summary` (Bonus)
+
+Returns aggregated metrics from the SQLite request log.
+
+**Response:**
+```json
+{
+  "total_requests": 42,
+  "average_latency_ms": 3421.5,
+  "most_used_tools": [
+    {"tool": "search_policy", "count": 18},
+    {"tool": "calculate_premium", "count": 12},
+    {"tool": "check_claim_status", "count": 7}
+  ],
+  "endpoints": {
+    "/chat": 25,
+    "/chat/stream": 10,
+    "/agent/chat": 7
+  }
+}
+```
+
+**Example curl:**
+```bash
+curl http://localhost:8000/metrics/summary
 ```
 
 ## vLLM Note (Bonus)

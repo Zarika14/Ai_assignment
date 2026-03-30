@@ -1,7 +1,11 @@
 version: '3.8'
 
 services:
-  # Ollama - Local LLM Runtime
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # Ollama — Local LLM runtime
+  # Models are persisted in a named volume so they survive container restarts
+  # ─────────────────────────────────────────────────────────────────────────
   ollama:
     image: ollama/ollama:latest
     container_name: ollama_service
@@ -13,12 +17,30 @@ services:
       - ollama_data:/root/.ollama
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
-      retries: 5
-    command: serve
+      start_period: 30s   # Give Ollama time to boot before health checks start
+      retries: 10
+    restart: unless-stopped
 
-  # FastAPI Model Server
+  # ─────────────────────────────────────────────────────────────────────────
+  # Model-pull — one-shot container that pulls mistral:latest then exits
+  # Runs after Ollama is healthy so the model is ready before model_server starts
+  # ─────────────────────────────────────────────────────────────────────────
+  model_pull:
+    image: ollama/ollama:latest
+    container_name: model_pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+    entrypoint: ["ollama", "pull", "mistral:latest"]
+    restart: "no"
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # FastAPI Model Server — wraps Ollama with /chat, /chat/stream, /metrics
+  # ─────────────────────────────────────────────────────────────────────────
   model_server:
     build:
       context: ./model_server
@@ -32,19 +54,28 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
+      model_pull:
+        condition: service_completed_successfully
     volumes:
-      - ./model_server:/app
-    command: python main.py
+      - ./model_server/metrics.db:/app/metrics.db   # Persist SQLite metrics across restarts
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
+      start_period: 15s
       retries: 5
+    restart: unless-stopped
 
+# ───────────────────────────────────────────────────────────────────────────
+# Named volumes
+# ───────────────────────────────────────────────────────────────────────────
 volumes:
   ollama_data:
     driver: local
 
+# ───────────────────────────────────────────────────────────────────────────
+# Network — all services on the same bridge network
+# ───────────────────────────────────────────────────────────────────────────
 networks:
   default:
     name: ai_assignment_network

@@ -1,0 +1,159 @@
+{
+  "summary": {
+    "total_queries": 10,
+    "hit_rate": 1.0,
+    "average_score": 5.0
+  },
+  "details": [
+    {
+      "query": "What is the collision deductible?",
+      "expected_source": "policy_auto_comprehensive.txt",
+      "retrieved_sources": [
+        "policy_auto_comprehensive.txt",
+        "policy_home_standard.txt",
+        "policy_auto_comprehensive.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "The collision deductible is $500.",
+      "generated_answer": "The collision deductible is $500 [policy_auto_comprehensive.txt, chunk 3].",
+      "score": 5,
+      "retrieval_latency_ms": 1393.95,
+      "generation_latency_ms": 267242.22
+    },
+    {
+      "query": "Does the auto policy cover intentional damage?",
+      "expected_source": "policy_auto_comprehensive.txt",
+      "retrieved_sources": [
+        "policy_auto_comprehensive.txt",
+        "policy_auto_comprehensive.txt",
+        "policy_home_standard.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "No, the policy strictly excludes intentional damage or destruction.",
+      "generated_answer": "The auto policy does not cover intentional damage [policy_auto_comprehensive.txt, chunk 7].",
+      "score": 5,
+      "retrieval_latency_ms": 2293.15,
+      "generation_latency_ms": 396025.41
+    },
+    {
+      "query": "When are renewal documents mailed for the auto policy?",
+      "expected_source": "policy_auto_comprehensive.txt",
+      "retrieved_sources": [
+        "policy_auto_comprehensive.txt",
+        "policy_health_bronze.txt",
+        "policy_auto_comprehensive.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "Renewal documents are mailed 45 days before expiration.",
+      "generated_answer": "The renewal documents for the auto policy are mailed 45 days before expiration [policy_auto_comprehensive.txt, chunk 10].",
+      "score": 5,
+      "retrieval_latency_ms": 4510.48,
+      "generation_latency_ms": 316345.45
+    },
+    {
+      "query": "What is the individual annual deductible for the Bronze plan?",
+      "expected_source": "policy_health_bronze.txt",
+      "retrieved_sources": [
+        "policy_health_bronze.txt",
+        "policy_health_bronze.txt",
+        "policy_auto_comprehensive.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "The individual annual deductible is $3,000.",
+      "generated_answer": "The individual annual deductible for the Bronze plan is $3,000 [policy_health_bronze.txt, chunk 2]. This information is not covered in the provided policies regarding automotive comprehensive insurance policy.",
+      "score": 5,
+      "retrieval_latency_ms": 2141.03,
+      "generation_latency_ms": 389172.59
+    },
+    {
+      "query": "Is prior authorization required for an MRI?",
+      "expected_source": "policy_health_bronze.txt",
+      "retrieved_sources": [
+        "policy_health_bronze.txt",
+        "policy_health_bronze.txt",
+        "policy_health_bronze.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "Yes, pre-authorization is required for MRI and advanced imaging.",
+      "generated_answer": "Prior authorization is required for MRI services [policy_health_bronze.txt, chunk 8].",
+      "score": 5,
+      "retrieval_latency_ms": 2234.75,
+      "generation_latency_ms": 347333.56
+    },
+    {
+      "query": "How much is the copay for a Tier 1 generic drug?",
+      "expected_source": "policy_health_bronze.txt",
+      "retrieved_sources": [
+        "policy_health_bronze.txt",
+        "policy_health_bronze.txt",
+        "policy_health_bronze.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "The copay for a Tier 1 generic drug is $15 per 30-day supply.",
+      "generated_answer": "The copay for a Tier 1 generic drug is $15 per 30-day supply [policy_health_bronze.txt, chunk 5].",
+      "score": 5,
+      "retrieval_latency_ms": 2122.3,
+      "generation_latency_ms": 315263.14
+    },
+    {
+      "query": "What is the limit for personal property coverage?",
+      "expected_source": "policy_home_standard.txt",
+      "retrieved_sources": [
+        "policy_home_standard.txt",
+        "policy_home_standard.txt",
+        "policy_auto_comprehensive.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "The limit for personal property coverage is $150,000, which is 70% of dwelling coverage.",
+      "generated_answer": "The limit for personal property coverage is $150,000, which represents 70% of dwelling coverage [policy_home_standard.txt, chunk 1]. This information is covered in the provided policies.",
+      "score": 5,
+      "retrieval_latency_ms": 1793.26,
+      "generation_latency_ms": 274489.46
+    },
+    {
+      "query": "Does the standard homeowners policy cover flood damage?",
+      "expected_source": "policy_home_standard.txt",
+      "retrieved_sources": [
+        "policy_home_standard.txt",
+        "policy_home_standard.txt",
+        "policy_auto_comprehensive.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "No, it does not cover flood damage; flood insurance must be purchased separately.",
+      "generated_answer": "The standard homeowners policy does not cover flood damage [policy_home_standard.txt, chunk 9]. This information is not covered in the provided policies regarding automotive insurance.",
+      "score": 5,
+      "retrieval_latency_ms": 4040.72,
+      "generation_latency_ms": 271410.08
+    },
+    {
+      "query": "What is the additional living expenses coverage limit?",
+      "expected_source": "policy_home_standard.txt",
+      "retrieved_sources": [
+        "policy_home_standard.txt",
+        "policy_home_standard.txt",
+        "policy_auto_comprehensive.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "The additional living expenses coverage limit is 20% of dwelling coverage, or $70,000.",
+      "generated_answer": "The additional living expenses coverage limit is $70,000 [policy_home_standard.txt, chunk 7].",
+      "score": 5,
+      "retrieval_latency_ms": 1851.17,
+      "generation_latency_ms": 268328.38
+    },
+    {
+      "query": "How many quotes from licensed contractors are recommended for a home claim?",
+      "expected_source": "policy_home_standard.txt",
+      "retrieved_sources": [
+        "policy_home_standard.txt",
+        "policy_auto_comprehensive.txt",
+        "policy_health_bronze.txt"
+      ],
+      "is_hit": true,
+      "reference_answer": "A minimum of 2 quotes from licensed contractors is recommended.",
+      "generated_answer": "The policy for home insurance recommends obtaining a minimum of two quotes from licensed contractors for a home claim [policy_home_standard.txt, chunk 3].",
+      "score": 5,
+      "retrieval_latency_ms": 2621.14,
+      "generation_latency_ms": 277444.65
+    }
+  ]
+}
