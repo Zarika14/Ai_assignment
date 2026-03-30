@@ -1,0 +1,74 @@
+[
+  {
+    "source_file": "policy_auto_comprehensive.txt",
+    "chunk_index": 0,
+    "char_start": 0,
+    "char_end": 1589
+  },
+  {
+    "source_file": "policy_auto_comprehensive.txt",
+    "chunk_index": 1,
+    "char_start": 1569,
+    "char_end": 3138
+  },
+  {
+    "source_file": "policy_auto_comprehensive.txt",
+    "chunk_index": 2,
+    "char_start": 3118,
+    "char_end": 4298
+  },
+  {
+    "source_file": "policy_health_bronze.txt",
+    "chunk_index": 0,
+    "char_start": 0,
+    "char_end": 1263
+  },
+  {
+    "source_file": "policy_health_bronze.txt",
+    "chunk_index": 1,
+    "char_start": 1243,
+    "char_end": 2357
+  },
+  {
+    "source_file": "policy_health_bronze.txt",
+    "chunk_index": 2,
+    "char_start": 2337,
+    "char_end": 3895
+  },
+  {
+    "source_file": "policy_health_bronze.txt",
+    "chunk_index": 3,
+    "char_start": 3875,
+    "char_end": 5465
+  },
+  {
+    "source_file": "policy_health_bronze.txt",
+    "chunk_index": 4,
+    "char_start": 5445,
+    "char_end": 6276
+  },
+  {
+    "source_file": "policy_home_standard.txt",
+    "chunk_index": 0,
+    "char_start": 0,
+    "char_end": 1159
+  },
+  {
+    "source_file": "policy_home_standard.txt",
+    "chunk_index": 1,
+    "char_start": 1139,
+    "char_end": 2568
+  },
+  {
+    "source_file": "policy_home_standard.txt",
+    "chunk_index": 2,
+    "char_start": 2548,
+    "char_end": 4119
+  },
+  {
+    "source_file": "policy_home_standard.txt",
+    "chunk_index": 3,
+    "char_start": 4099,
+    "char_end": 5684
+  }
+]

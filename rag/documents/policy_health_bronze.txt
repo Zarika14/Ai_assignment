@@ -1,0 +1,146 @@
+BRONZE HEALTH INSURANCE PLAN
+
+Plan Name: HealthCare Plus Bronze 2026
+Group Number: HCPB-2026-78942
+Effective Date: January 1, 2026
+Plan Year: Calendar year (January 1 - December 31)
+Member Name: Michael Chen
+Member ID: 78942-01-ZA7C89
+
+1. PLAN OVERVIEW
+
+This Bronze health insurance plan is designed for individuals and families seeking affordable coverage with moderate out-of-pocket costs. This plan covers preventive services at no cost and includes coverage for medical, prescription, dental, and vision services through an established provider network.
+
+2. DEDUCTIBLES
+
+Individual Annual Deductible: $3,000
+Family Annual Deductible: $6,000
+Embedded Deductible: Each family member has a separate deductible that does not exceed $3,000
+
+The deductible is the amount you must pay out-of-pocket for covered services each plan year before the plan begins to share costs. After meeting your deductible, you pay copays or coinsurance for covered services.
+
+3. OUT-OF-POCKET MAXIMUMS
+
+Individual Out-of-Pocket Maximum: $7,000
+Family Out-of-Pocket Maximum: $14,000
+
+Once your out-of-pocket costs reach this limit during the plan year (including deductibles, copays, and coinsurance), the plan pays 100% of additional covered services for the remainder of that year.
+
+4. COPAY STRUCTURE
+
+Primary Care Physician Visit: $30 per visit
+Specialist Visit: $60 per visit
+Urgent Care Center: $75 per visit
+Emergency Room: $300 per visit (waived if admitted to hospital)
+Lab Work: $0 after deductible (preventive); $30 (diagnostic)
+Imaging (X-ray, MRI, CT): $150 after deductible
+Mental Health/Substance Abuse Therapy: $30 per session (up to 52 visits per year)
+Physical/Occupational Therapy: $40 per visit (up to 30 visits per year)
+
+5. PRESCRIPTION DRUG COVERAGE
+
+Three-Tier Formulary:
+- Tier 1 (Generic): $15 copay per 30-day supply
+- Tier 2 (Preferred Brand): $40 copay per 30-day supply
+- Tier 3 (Non-Preferred Brand): $75 copay per 30-day supply
+- Specialty Drugs: 20% coinsurance after deductible (maximum $250 per prescription)
+
+Maintenance medications (for chronic conditions) are covered at 3-month supplies with the following options:
+- Mail-order pharmacy: $35 copay for 90-day supply
+- Network retail pharmacy: $45 copay for 90-day supply
+
+Prior authorization required for certain medications. Quantity limits apply to select medications per FDA guidelines.
+
+6. PREVENTIVE SERVICES
+
+Covered at 100% with no copay, coinsurance, or deductible when using in-network providers:
+- Annual preventive care visits (wellness exam)
+- Age-appropriate screenings (cancer, cardiovascular, metabolic)
+- Vaccinations and immunizations
+- Contraceptive methods (FDA-approved)
+- Prenatal and postnatal care
+- Depression screening
+- Aspirin use screening
+- Blood pressure screening
+- Cholesterol screening
+
+This includes only services classified as preventive under ACA guidelines. Diagnostic services, even if recommended during a preventive visit, may require a copay or coinsurance.
+
+7. NETWORK REQUIREMENTS
+
+This plan uses an Exclusive Provider Organization (EPO) network model. Coverage is significantly reduced for out-of-network services:
+- In-Network: Copay/coinsurance applies
+- Out-of-Network: 40% coinsurance after $5,000 out-of-network deductible (separate from in-network deductible)
+
+Using in-network providers is strongly encouraged to minimize costs. Search the provider directory at www.healthcareplus.com or call 1-800-HC-PLUS-1.
+
+8. PRE-AUTHORIZATION REQUIREMENTS
+
+Pre-authorization (approval before receiving service) is required for:
+- Non-emergency hospitalizations
+- Outpatient surgeries
+- MRI and advanced imaging (CT, PET scans)
+- Certain specialty services (sleep studies, etc.)
+- Durable medical equipment
+- Physical therapy sessions beyond initial 5 visits
+- Organ transplants
+- Experimental treatments
+
+Failure to obtain pre-authorization may result in partial or full denial of coverage. Emergency services are generally covered without pre-authorization.
+
+9. COVERED SERVICES
+
+Medical Services:
+- Hospital inpatient and outpatient services
+- Physician visits and consultations
+- Diagnostic testing and imaging
+- Surgery and related procedures
+- Mental health and behavioral health services
+- Substance abuse treatment (inpatient and outpatient)
+- Maternity and newborn care
+- Rehabilitation services
+- Home health care (when medically necessary)
+- Skilled nursing facility (up to 60 days per year)
+
+NOT Covered:
+- Cosmetic procedures unless medically necessary
+- Fertility treatments and artificial insemination
+- Weight loss surgery and programs
+- Experimental or investigational treatments (unless part of approved clinical trial)
+- Routine vision care beyond annual eye exam
+
+10. EXCLUSIONS AND LIMITATIONS
+
+The plan does not cover:
+- Services not medically necessary
+- Services for non-covered conditions
+- Elective procedures
+- Alternative medicine and acupuncture (except certain approved therapies)
+- Non-prescription medications
+- Medical devices and supplies not on approved list
+- Services received before plan effective date
+- Services from non-network emergency facilities (except life-threatening emergencies)
+- Charges exceeding reasonable and customary rates
+- Self-inflicted injury or injuries from illegal activity
+
+11. CLAIMS AND APPEALS PROCESS
+
+Submit claims within 1 year of service date. Claims can be submitted:
+- Online portal: www.healthcareplus.com/member
+- Phone: 1-800-HC-PLUS-1
+- Mail: HealthCare Plus Claims Department, P.O. Box 2847, Des Moines, IA 50306
+
+Most in-network claims are processed within 15 business days. To appeal a denied claim, you have 180 days from denial date. Submit written appeal with documentation to the appeals department.
+
+12. RENEWAL AND TERMINATION
+
+This coverage renews annually on January 1 unless terminated. Coverage terminates if:
+- Premium payments are 30 days past due
+- You request cancellation with 30 days' notice
+- You become eligible for Medicare or Medicaid
+- You lose eligible group member status (employment termination)
+- Group coverage is terminated by employer
+
+Member Signature: _________________  Date: January 1, 2026
+
+This document is a summary of benefits. For complete terms and conditions, refer to your Official Summary of Benefits and Coverage (SBC) and complete policy documents.
